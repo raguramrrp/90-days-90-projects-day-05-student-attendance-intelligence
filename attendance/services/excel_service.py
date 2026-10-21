@@ -26,6 +26,18 @@ def sanitize_cell_value(val: Any) -> Any:
     return val
 
 
+def mask_phone_value(val: Any) -> str:
+    """Masks phone numbers for privacy protection in exported reports."""
+    if not val or val == "N/A":
+        return "-"
+    val_str = str(val).strip()
+    if len(val_str) > 8:
+        return f"{val_str[:6]}****{val_str[-3:]}"
+    elif len(val_str) > 4:
+        return f"{val_str[:2]}****{val_str[-2:]}"
+    return "****"
+
+
 def generate_attendance_import_template(class_section: ClassSection = None, subject: Subject = None) -> io.BytesIO:
     """Generates a downloadable Excel template with pre-filled enrolled students if class is specified."""
     wb = openpyxl.Workbook()
@@ -346,10 +358,10 @@ def export_at_risk_students_excel(students_queryset) -> io.BytesIO:
             sanitize_cell_value(st.class_section.department.code if st.class_section else "N/A"),
             st.cached_attendance_percentage,
             st.cached_risk_level,
-            sanitize_cell_value(getattr(st.user, 'profile', None).phone if hasattr(st.user, 'profile') else ""),
+            sanitize_cell_value(mask_phone_value(getattr(st.user, 'profile', None).phone if hasattr(st.user, 'profile') else "")),
             sanitize_cell_value(parent_name),
-            sanitize_cell_value(parent_phone),
-            sanitize_cell_value(st.emergency_contact)
+            sanitize_cell_value(mask_phone_value(parent_phone)),
+            sanitize_cell_value(mask_phone_value(st.emergency_contact))
         ])
 
     for col in ws.columns:

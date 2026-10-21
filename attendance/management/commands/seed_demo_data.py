@@ -108,7 +108,7 @@ class Command(BaseCommand):
             admin_user.save()
             UserProfile.objects.update_or_create(
                 user=admin_user,
-                defaults={'role': UserRole.ADMIN, 'phone': '+91 98765 00001', 'address': 'Academic Administrative Complex'}
+                defaults={'role': UserRole.ADMIN, 'phone': '+91 9XXXX XX001', 'address': 'Academic Administrative Complex'}
             )
 
             # 5. Faculty Accounts
@@ -122,7 +122,7 @@ class Command(BaseCommand):
                 u, _ = User.objects.get_or_create(username=uname, defaults={'first_name': fname, 'last_name': lname, 'email': email})
                 u.set_password('faculty123')
                 u.save()
-                UserProfile.objects.update_or_create(user=u, defaults={'role': UserRole.FACULTY, 'phone': '+91 98765 11111'})
+                UserProfile.objects.update_or_create(user=u, defaults={'role': UserRole.FACULTY, 'phone': '+91 9XXXX XX111'})
                 f_prof, _ = FacultyProfile.objects.update_or_create(
                     user=u,
                     defaults={'employee_id': empid, 'department': dept, 'designation': desig, 'qualification': 'Ph.D in AI'}
@@ -164,14 +164,14 @@ class Command(BaseCommand):
                 u, _ = User.objects.get_or_create(username=uname, defaults={'first_name': fname, 'last_name': lname, 'email': email})
                 u.set_password('student123')
                 u.save()
-                UserProfile.objects.update_or_create(user=u, defaults={'role': UserRole.STUDENT, 'phone': '+91 94444 12345'})
+                UserProfile.objects.update_or_create(user=u, defaults={'role': UserRole.STUDENT, 'phone': '+91 9XXXX XX345'})
                 st_prof, _ = StudentProfile.objects.update_or_create(
                     user=u,
                     defaults={
                         'roll_number': uname.upper(),
                         'registration_number': regno,
                         'class_section': c_sec,
-                        'emergency_contact': '+91 94444 99999'
+                        'emergency_contact': '+91 9XXXX XX999'
                     }
                 )
                 student_profiles[uname] = (st_prof, target_rate)
@@ -193,7 +193,7 @@ class Command(BaseCommand):
                 pu, _ = User.objects.get_or_create(username=puname, defaults={'first_name': pfname, 'last_name': plname, 'email': pemail})
                 pu.set_password('parent123')
                 pu.save()
-                UserProfile.objects.update_or_create(user=pu, defaults={'role': UserRole.PARENT, 'phone': '+91 98888 54321'})
+                UserProfile.objects.update_or_create(user=pu, defaults={'role': UserRole.PARENT, 'phone': '+91 9XXXX XX321'})
                 p_prof, _ = ParentProfile.objects.update_or_create(
                     user=pu,
                     defaults={'occupation': 'Engineer', 'notification_preference': 'ALL', 'sms_enabled': True, 'email_enabled': True}
