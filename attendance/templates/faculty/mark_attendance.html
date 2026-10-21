@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load attendance_tags %}
+
+{% block title %}Mark Period Attendance{% endblock %}
+{% block page_title %}Period-Wise Attendance Recording{% endblock %}
+
+{% block content %}
+<div class="panel">
+    <div class="panel-header" style="background: var(--surface-subtle);">
+        <form method="get" id="filterForm" style="display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; width: 100%;">
+            <div class="form-group" style="margin-bottom: 0; min-width: 180px;">
+                <label class="form-label">Class Section</label>
+                <select name="class_id" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                    {% for a in assignments %}
+                    <option value="{{ a.class_section.id }}" {% if selected_class and selected_class.id == a.class_section.id %}selected{% endif %}>
+                        {{ a.class_section.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0; min-width: 220px;">
+                <label class="form-label">Subject</label>
+                <select name="subject_id" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                    {% for a in assignments %}
+                    <option value="{{ a.subject.id }}" {% if selected_subject and selected_subject.id == a.subject.id %}selected{% endif %}>
+                        {{ a.subject.code }} - {{ a.subject.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Session Date</label>
+                <input type="date" name="date" class="form-control" value="{{ session_date }}" onchange="document.getElementById('filterForm').submit()">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0; width: 110px;">
+                <label class="form-label">Period</label>
+                <select name="period" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                    {% for p in period_range %}
+                    <option value="{{ p }}" {% if period_num == p %}selected{% endif %}>P{{ p }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+
+    <div class="panel-body">
+        {% if existing_session %}
+        <div class="alert-banner alert-info" style="margin-bottom: 16px;">
+            <span>Attendance for Period {{ period_num }} on {{ session_date }} was previously recorded as <strong>{{ existing_session.get_status_display }}</strong> on {{ existing_session.updated_at|date:"M d, H:i" }}. Updating this form will adjust the records and update student statistics.</span>
+        </div>
+        {% endif %}
+
+        {% if not students %}
+        <div class="empty-state">
+            <div class="empty-state-title">No Students Enrolled</div>
+            <div class="empty-state-text">Please assign students to {{ selected_class.name }} to record period attendance.</div>
+        </div>
+        {% else %}
+        <form method="post" id="attendanceForm">
+            {% csrf_token %}
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+                <div class="form-group" style="margin-bottom: 0; flex-grow: 1; max-width: 480px;">
+                    <label class="form-label">Topic / Curriculum Covered in Period {{ period_num }}</label>
+                    <input type="text" name="topic_covered" class="form-control" placeholder="e.g. Backpropagation Algorithm & Gradient Descent" value="{{ existing_session.topic_covered|default:'' }}">
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="setAllAttendance('PRESENT')">
+                        Mark All Present
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="setAllAttendance('ABSENT')">
+                        Mark All Absent
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive" style="margin-bottom: 24px;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th>Roll Number</th>
+                            <th>Student Name</th>
+                            <th style="text-align: center; width: 220px;">Attendance Status</th>
+                            <th>Individual Remark (Optional)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for st in students %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td><strong>{{ st.roll_number }}</strong></td>
+                            <td>{{ st.user.get_full_name|default:st.user.username }}</td>
+                            <td style="text-align: center;">
+                                <div style="display: inline-flex; gap: 16px; font-weight: 500;">
+                                    <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; color: var(--status-safe);">
+                                        <input type="radio" name="student_{{ st.id }}" value="PRESENT" class="attendance-radio radio-present" {% if existing_records_map|default:None %}{% if existing_records_map|dict_lookup:st.id == 'PRESENT' %}checked{% endif %}{% else %}checked{% endif %}>
+                                        Present
+                                    </label>
+                                    <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; color: var(--status-critical);">
+                                        <input type="radio" name="student_{{ st.id }}" value="ABSENT" class="attendance-radio radio-absent" {% if existing_records_map|dict_lookup:st.id == 'ABSENT' %}checked{% endif %}>
+                                        Absent
+                                    </label>
+                                    <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; color: #556D52;">
+                                        <input type="radio" name="student_{{ st.id }}" value="EXCUSED" class="attendance-radio radio-excused" {% if existing_records_map|dict_lookup:st.id == 'EXCUSED' %}checked{% endif %}>
+                                        On-Duty
+                                    </label>
+                                </div>
+                            </td>
+                            <td>
+                                <input type="text" name="remarks_{{ st.id }}" class="form-control" style="padding: 4px 8px; font-size: 13px;" placeholder="Optional remark...">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display: flex; gap: 12px; align-items: center; border-top: 1px solid var(--border); padding-top: 16px;">
+                <button type="submit" name="action_type" value="submit" class="btn btn-primary" onclick="return confirm('Submit attendance for Period {{ period_num }}? Parent notifications will be dispatched for unexcused absences.');">
+                    Submit & Dispatch Alerts
+                </button>
+                <button type="submit" name="action_type" value="draft" class="btn btn-secondary">
+                    Save as Draft (No Alerts Sent)
+                </button>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setAllAttendance(status) {
+    document.querySelectorAll('.attendance-radio').forEach(radio => {
+        if (radio.value === status) {
+            radio.checked = true;
+        }
+    });
+}
+</script>
+{% endblock %}

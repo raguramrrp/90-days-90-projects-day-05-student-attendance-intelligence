@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}Notification Center{% endblock %}
+{% block page_title %}Notification Center & Communications Dispatch{% endblock %}
+
+{% block header_actions %}
+<form method="post" action="{% url 'notification_mark_all_read' %}" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-secondary btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Mark All as Read
+    </button>
+</form>
+{% endblock %}
+
+{% block content %}
+<div class="panel">
+    <!-- Filter Tabs -->
+    <div class="panel-header" style="flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; gap: 8px;">
+            <a href="?filter=all{% if category_filter %}&category={{ category_filter }}{% endif %}" class="btn btn-sm {% if filter_type == 'all' %}btn-primary{% else %}btn-secondary{% endif %}">
+                All Alerts
+            </a>
+            <a href="?filter=unread{% if category_filter %}&category={{ category_filter }}{% endif %}" class="btn btn-sm {% if filter_type == 'unread' %}btn-primary{% else %}btn-secondary{% endif %}">
+                Unread Only
+            </a>
+        </div>
+
+        <form method="get" style="display: flex; gap: 8px; align-items: center;">
+            <input type="hidden" name="filter" value="{{ filter_type }}">
+            <select name="category" class="form-select" onchange="this.form.submit()" style="max-width: 200px; padding: 4px 8px; font-size: 13px;">
+                <option value="">All Categories</option>
+                {% for cat_val, cat_label in categories %}
+                <option value="{{ cat_val }}" {% if category_filter == cat_val %}selected{% endif %}>{{ cat_label }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    <div class="panel-body" style="padding: 0;">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;"></th>
+                        <th>Alert Details</th>
+                        <th>Category</th>
+                        <th>Ward</th>
+                        <th>Time</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for n in page_obj %}
+                    <tr style="{% if not n.is_read %}background-color: var(--brand-forest-light); font-weight: 500;{% endif %}">
+                        <td style="text-align: center;">
+                            {% if not n.is_read %}
+                            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-terracotta);" title="Unread"></span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong style="color: var(--brand-forest); font-size: 14px;">{{ n.title }}</strong>
+                            <div style="font-size: 13px; color: var(--text-main); margin-top: 2px;">{{ n.message }}</div>
+                        </td>
+                        <td>
+                            <span class="status-tag {% if n.category == 'ABSENCE' or n.category == 'RISK_CRITICAL' %}tag-absent{% elif n.category == 'RISK_WARNING' %}tag-excused{% else %}tag-present{% endif %}">
+                                {{ n.get_category_display }}
+                            </span>
+                        </td>
+                        <td>{{ n.student.roll_number|default:"-" }}</td>
+                        <td style="white-space: nowrap; font-size: 12px; color: var(--text-secondary);">
+                            {{ n.created_at|date:"M d, H:i" }}
+                        </td>
+                        <td style="white-space: nowrap;">
+                            {% if not n.is_read %}
+                            <a href="{% url 'notification_mark_read' n.id %}" class="btn btn-secondary btn-sm">
+                                Mark Read & View
+                            </a>
+                            {% elif n.action_url %}
+                            <a href="{{ n.action_url }}" class="btn btn-secondary btn-sm">
+                                View Event &rarr;
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                                </div>
+                                <div class="empty-state-title">No notifications</div>
+                                <div class="empty-state-text">You are fully caught up with all academic and attendance notices.</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <div style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border);">
+            <span style="font-size: 13px; color: var(--text-secondary);">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            <div style="display: flex; gap: 8px;">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&filter={{ filter_type }}&category={{ category_filter }}" class="btn btn-secondary btn-sm">&larr; Previous</a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&filter={{ filter_type }}&category={{ category_filter }}" class="btn btn-secondary btn-sm">Next &rarr;</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

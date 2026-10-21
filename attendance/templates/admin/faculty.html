@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Faculty Directory{% endblock %}
+{% block page_title %}Faculty Directory & Course Allocations{% endblock %}
+
+{% block content %}
+<div class="panel">
+    <div class="panel-header">
+        <div class="panel-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+            Registered Faculty Members
+        </div>
+        <span style="font-size: 13px; color: var(--text-secondary);">Total: {{ faculty_list.count }}</span>
+    </div>
+
+    <div class="panel-body" style="padding: 0;">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Employee ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Designation</th>
+                        <th>Assigned Teaching Courses</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in faculty_list %}
+                    <tr>
+                        <td><strong>{{ f.employee_id }}</strong></td>
+                        <td>{{ f.user.get_full_name|default:f.user.username }}</td>
+                        <td>{{ f.department.name|default:"General" }}</td>
+                        <td>{{ f.designation }}</td>
+                        <td>
+                            {% for assign in f.teaching_assignments.all %}
+                            <span class="status-tag tag-present" style="margin-right: 4px; margin-bottom: 4px;">
+                                {{ assign.subject.code }} ({{ assign.class_section.name }})
+                            </span>
+                            {% empty %}
+                            <span style="color: var(--text-muted); font-size: 12px;">No courses assigned</span>
+                            {% endfor %}
+                        </td>
+                        <td>{{ f.user.email }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No faculty profiles registered.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

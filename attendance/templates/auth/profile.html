@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile & Settings{% endblock %}
+{% block page_title %}User Profile & Account Settings{% endblock %}
+
+{% block content %}
+<div style="max-width: 780px;">
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Personal Details
+            </div>
+            <span class="brand-role-tag" style="background: var(--brand-forest); color: #fff;">{{ user.profile.get_role_display }}</span>
+        </div>
+        <div class="panel-body">
+            <form method="post">
+                {% csrf_token %}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" value="{{ user.get_full_name|default:user.username }}" disabled>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" name="email" class="form-control" value="{{ user.email }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Contact Phone</label>
+                        <input type="text" name="phone" class="form-control" value="{{ profile.phone }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Residential Address</label>
+                    <textarea name="address" class="form-control" rows="3">{{ profile.address }}</textarea>
+                </div>
+
+                <!-- Role-Specific Metadata -->
+                {% if is_student and user.student_profile %}
+                <div style="background: var(--surface-subtle); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
+                    <h4 style="font-size: 13px; text-transform: uppercase; color: var(--brand-forest); margin-bottom: 10px;">Academic Enrollment Info</h4>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; font-size: 13px;">
+                        <div><strong>Roll Number:</strong> {{ user.student_profile.roll_number }}</div>
+                        <div><strong>Registration No:</strong> {{ user.student_profile.registration_number }}</div>
+                        <div><strong>Class Section:</strong> {{ user.student_profile.class_section.name }}</div>
+                    </div>
+                </div>
+                {% elif is_faculty and user.faculty_profile %}
+                <div style="background: var(--surface-subtle); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
+                    <h4 style="font-size: 13px; text-transform: uppercase; color: var(--brand-forest); margin-bottom: 10px;">Faculty Designation</h4>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; font-size: 13px;">
+                        <div><strong>Employee ID:</strong> {{ user.faculty_profile.employee_id }}</div>
+                        <div><strong>Designation:</strong> {{ user.faculty_profile.designation }}</div>
+                        <div><strong>Department:</strong> {{ user.faculty_profile.department.name }}</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

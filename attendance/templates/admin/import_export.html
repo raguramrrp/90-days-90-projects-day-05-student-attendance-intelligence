@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Excel Import / Export{% endblock %}
+{% block page_title %}Attendance Data Operations: Excel Batch Import & Reports Export{% endblock %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+    <!-- Step 1 & 2: Template Download & Upload -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                1. Upload Attendance Spreadsheet
+            </div>
+        </div>
+        <div class="panel-body">
+            <p style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 16px;">
+                Download the standardized Excel template, fill in periods and student attendance statuses, then upload for row-level verification.
+            </p>
+
+            <form method="post" style="margin-bottom: 20px;">
+                {% csrf_token %}
+                <button type="submit" name="download_template" value="1" class="btn btn-secondary" style="width: 100%;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                    Download Blank Attendance Template (.xlsx)
+                </button>
+            </form>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label">Select Completed Excel File (.xlsx)</label>
+                    <input type="file" name="excel_file" accept=".xlsx" class="form-control" required>
+                </div>
+                <button type="submit" name="upload_excel" value="1" class="btn btn-primary" style="width: 100%;">
+                    Parse & Validate Spreadsheet
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Export Reports -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                2. Export Institutional Reports
+            </div>
+        </div>
+        <div class="panel-body">
+            <p style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 20px;">
+                Generate sanitized Excel reports for administrative review, debarment alerts, and parent communications. All text exports are protected against spreadsheet formula injection.
+            </p>
+
+            <form method="post" style="margin-bottom: 16px;">
+                {% csrf_token %}
+                <button type="submit" name="export_at_risk" value="1" class="btn btn-accent" style="width: 100%;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+                    Export At-Risk & Low-Attendance Student List (.xlsx)
+                </button>
+            </form>
+
+            <div style="background: var(--surface-subtle); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; font-size: 13px;">
+                <strong>Security Guard:</strong> Exported files sanitize special leading characters (<code>=, +, -, @</code>) to protect staff from spreadsheet formula execution exploits.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview & Validation Modal / Table if uploaded -->
+{% if preview_data %}
+<div class="panel" style="border: 2px solid var(--brand-forest);">
+    <div class="panel-header" style="background: var(--brand-forest-light);">
+        <div class="panel-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="m9 15 2 2 4-4"/></svg>
+            Spreadsheet Validation Summary
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <span style="font-size: 13px; font-weight: 600;">Valid: <strong style="color: var(--status-safe);">{{ preview_data.valid_count }}</strong></span>
+            <span style="font-size: 13px; font-weight: 600;">Errors: <strong style="color: var(--status-critical);">{{ preview_data.error_count }}</strong></span>
+        </div>
+    </div>
+    
+    <div class="panel-body">
+        {% if preview_data.error_count > 0 %}
+        <div class="alert-banner alert-warning">
+            <span>The spreadsheet contains {{ preview_data.error_count }} row-level errors. You can review the issues below and commit only the {{ preview_data.valid_count }} valid records, or correct your file and re-upload.</span>
+        </div>
+        {% endif %}
+
+        {% if preview_data.valid_count > 0 %}
+        <form method="post" style="display: inline-block; margin-bottom: 20px;">
+            {% csrf_token %}
+            <button type="submit" name="commit_import" value="1" class="btn btn-primary" onclick="return confirm('Commit {{ preview_data.valid_count }} valid attendance records to database?');">
+                Commit {{ preview_data.valid_count }} Valid Records to Database
+            </button>
+            <a href="{% url 'admin_import_export' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+        {% endif %}
+
+        {% if preview_data.error_rows %}
+        <h4 style="color: var(--status-critical); margin-bottom: 10px;">Invalid Rows (Will Not Be Committed):</h4>
+        <div class="table-responsive" style="margin-bottom: 24px;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Row #</th>
+                        <th>Roll No</th>
+                        <th>Subject</th>
+                        <th>Date & Period</th>
+                        <th>Status</th>
+                        <th>Reason for Invalidation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for err in preview_data.error_rows %}
+                    <tr style="background: var(--status-critical-bg);">
+                        <td>Row {{ err.row_num }}</td>
+                        <td>{{ err.roll_number|default:"(blank)" }}</td>
+                        <td>{{ err.subject_code|default:"(blank)" }}</td>
+                        <td>{{ err.date }} P{{ err.period }}</td>
+                        <td>{{ err.status }}</td>
+                        <td>
+                            <ul style="padding-left: 18px; color: var(--status-critical); font-size: 12.5px;">
+                                {% for msg in err.errors %}
+                                <li>{{ msg }}</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% if preview_data.valid_rows %}
+        <h4 style="color: var(--status-safe); margin-bottom: 10px;">Staged Valid Records (First 10 of {{ preview_data.valid_count }}):</h4>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Row #</th>
+                        <th>Roll No</th>
+                        <th>Student Name</th>
+                        <th>Subject</th>
+                        <th>Date & Period</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for v in preview_data.valid_rows|slice:":10" %}
+                    <tr>
+                        <td>Row {{ v.row_num }}</td>
+                        <td><strong>{{ v.roll_number }}</strong></td>
+                        <td>{{ v.student_name }}</td>
+                        <td>{{ v.subject_code }}</td>
+                        <td>{{ v.date }} P{{ v.period }}</td>
+                        <td><span class="status-tag {% if v.status == 'PRESENT' %}tag-present{% elif v.status == 'ABSENT' %}tag-absent{% else %}tag-excused{% endif %}">{{ v.status }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

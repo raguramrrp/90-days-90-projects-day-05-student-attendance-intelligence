@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block title %}Faculty Dashboard{% endblock %}
+{% block page_title %}Faculty Command Dashboard{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'faculty_mark_attendance' %}" class="btn btn-primary btn-sm">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Mark Attendance
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-header">
+            <span class="stat-label">Assigned Classes</span>
+            <div class="stat-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+            </div>
+        </div>
+        <div class="stat-value">{{ assignments.count }}</div>
+        <div class="stat-subtext">Active course teaching assignments</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-header">
+            <span class="stat-label">Today's Sessions</span>
+            <div class="stat-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+            </div>
+        </div>
+        <div class="stat-value">{{ today_sessions.count }}</div>
+        <div class="stat-subtext">Periods on today's schedule</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-header">
+            <span class="stat-label">At-Risk Students</span>
+            <div class="stat-icon" style="background: var(--status-warning-bg); color: var(--status-warning);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+            </div>
+        </div>
+        <div class="stat-value" style="color: var(--status-warning);">{{ at_risk_students.count }}</div>
+        <div class="stat-subtext">In your assigned classes</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-header">
+            <span class="stat-label">Pending Reviews</span>
+            <div class="stat-icon" style="background: var(--accent-terracotta-light); color: var(--accent-terracotta);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="m9 15 2 2 4-4"/></svg>
+            </div>
+        </div>
+        <div class="stat-value" style="color: var(--accent-terracotta);">{{ pending_leaves|add:pending_corrections }}</div>
+        <div class="stat-subtext">{{ pending_leaves }} leave, {{ pending_corrections }} dispute requests</div>
+    </div>
+</div>
+
+<!-- Assigned Courses and Schedule -->
+<div style="display: grid; grid-template-columns: 3fr 2fr; gap: 24px; margin-bottom: 24px;">
+    <!-- Course Cards -->
+    <div class="panel" style="margin-bottom: 0;">
+        <div class="panel-header">
+            <div class="panel-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m2 7 10-5 10 5-10 5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+                My Teaching Allocations
+            </div>
+        </div>
+        <div class="panel-body" style="padding: 0;">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Class Section</th>
+                            <th>Threshold</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in assignments %}
+                        <tr>
+                            <td>
+                                <strong>{{ a.subject.code }}</strong><br>
+                                <span style="font-size: 12px; color: var(--text-secondary);">{{ a.subject.name }}</span>
+                            </td>
+                            <td>{{ a.class_section.name }}</td>
+                            <td><span class="status-tag tag-present">Min {{ a.subject.min_attendance_threshold }}%</span></td>
+                            <td>
+                                <a href="{% url 'faculty_mark_attendance' %}?class_id={{ a.class_section.id }}&subject_id={{ a.subject.id }}" class="btn btn-primary btn-sm">Mark</a>
+                                <a href="{% url 'faculty_export_class' %}?class_id={{ a.class_section.id }}&subject_id={{ a.subject.id }}" class="btn btn-secondary btn-sm" title="Export Excel">Export</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 24px;">No courses assigned yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Periods -->
+    <div class="panel" style="margin-bottom: 0;">
+        <div class="panel-header">
+            <div class="panel-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Today's Schedule
+            </div>
+        </div>
+        <div class="panel-body" style="padding: 16px;">
+            {% for s in today_sessions %}
+            <div style="background: var(--surface-subtle); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 600; color: var(--brand-forest); font-size: 13.5px;">
+                        Period {{ s.period_number }}: {{ s.subject.code }}
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        {{ s.class_section.name }} &bull; {{ s.start_time|time:"H:i" }} - {{ s.end_time|time:"H:i" }} &bull; {{ s.room_number|default:"Hall" }}
+                    </div>
+                </div>
+                <a href="{% url 'faculty_mark_attendance' %}?class_id={{ s.class_section.id }}&subject_id={{ s.subject.id }}&period={{ s.period_number }}" class="btn btn-primary btn-sm">
+                    Enter
+                </a>
+            </div>
+            {% empty %}
+            <div style="text-align: center; color: var(--text-muted); padding: 20px;">
+                No timetable periods scheduled for today.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- At-Risk Preview -->
+<div class="panel">
+    <div class="panel-header">
+        <div class="panel-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+            Students at Attendance Risk in Your Classes
+        </div>
+        <a href="{% url 'faculty_at_risk' %}" style="font-size: 12px; font-weight: 600;">View All &rarr;</a>
+    </div>
+    <div class="panel-body" style="padding: 0;">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Roll No</th>
+                        <th>Student Name</th>
+                        <th>Class Section</th>
+                        <th>Current Attendance %</th>
+                        <th>Risk Standing</th>
+                        <th>Emergency Contact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for st in at_risk_students %}
+                    <tr>
+                        <td><strong>{{ st.roll_number }}</strong></td>
+                        <td>{{ st.user.get_full_name|default:st.user.username }}</td>
+                        <td>{{ st.class_section.name }}</td>
+                        <td>
+                            <strong style="color: {% if st.cached_risk_level == 'WARNING' %}var(--status-warning){% else %}var(--status-critical){% endif %};">
+                                {{ st.cached_attendance_percentage }}%
+                            </strong>
+                        </td>
+                        <td>
+                            {% if st.cached_risk_level == 'WARNING' %}
+                            <span class="badge-risk risk-warning">Warning Buffer</span>
+                            {% else %}
+                            <span class="badge-risk risk-critical">Critical Deficit</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ st.emergency_contact|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">All enrolled students are in safe standing.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

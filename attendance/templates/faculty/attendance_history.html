@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Session Attendance History{% endblock %}
+{% block page_title %}Marked Session History & Authorized Corrections{% endblock %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
+    <!-- Sessions List -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Marked Sessions
+            </div>
+        </div>
+        <div class="panel-body" style="padding: 12px; max-height: 600px; overflow-y: auto;">
+            {% for s in sessions %}
+            <a href="?session_id={{ s.id }}" style="text-decoration: none; display: block; margin-bottom: 8px;">
+                <div style="padding: 12px; border-radius: var(--radius-md); border: 1px solid {% if selected_session and selected_session.id == s.id %}var(--brand-forest){% else %}var(--border){% endif %}; background: {% if selected_session and selected_session.id == s.id %}var(--brand-forest-light){% else %}var(--surface){% endif %}; transition: all 0.15s ease;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <strong style="color: var(--brand-forest); font-size: 14px;">{{ s.subject.code }} &bull; Period {{ s.period_number }}</strong>
+                        <span class="status-tag {% if s.status == 'SUBMITTED' %}tag-present{% else %}tag-excused{% endif %}">{{ s.status }}</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        {{ s.class_section.name }} &bull; {{ s.date|date:"D, d M Y" }}
+                    </div>
+                    {% if s.topic_covered %}
+                    <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        Topic: {{ s.topic_covered }}
+                    </div>
+                    {% endif %}
+                </div>
+            </a>
+            {% empty %}
+            <div style="text-align: center; color: var(--text-muted); padding: 24px;">No attendance sessions found.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Selected Session Student Records and Edit Form -->
+    <div class="panel">
+        {% if selected_session %}
+        <div class="panel-header">
+            <div>
+                <div class="panel-title">
+                    {{ selected_session.subject.code }} — Period {{ selected_session.period_number }} ({{ selected_session.date }})
+                </div>
+                <span style="font-size: 12px; color: var(--text-secondary);">Class: {{ selected_session.class_section.name }} | Topic: {{ selected_session.topic_covered|default:"General Period" }}</span>
+            </div>
+            <a href="{% url 'faculty_export_class' %}?class_id={{ selected_session.class_section.id }}&subject_id={{ selected_session.subject.id }}" class="btn btn-secondary btn-sm">
+                Export Excel
+            </a>
+        </div>
+        <div class="panel-body" style="padding: 0;">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Roll Number</th>
+                            <th>Student</th>
+                            <th>Status</th>
+                            <th>Action / Modify</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in session_records %}
+                        <tr>
+                            <td><strong>{{ r.student.roll_number }}</strong></td>
+                            <td>{{ r.student.user.get_full_name|default:r.student.user.username }}</td>
+                            <td>
+                                <span class="status-tag {% if r.status == 'PRESENT' %}tag-present{% elif r.status == 'ABSENT' %}tag-absent{% else %}tag-excused{% endif %}">
+                                    {{ r.get_status_display }}
+                                </span>
+                                {% if r.remarks %}<div style="font-size: 11px; color: var(--text-muted);">{{ r.remarks }}</div>{% endif %}
+                            </td>
+                            <td>
+                                <!-- Quick Correction Form with Mandatory Reason -->
+                                <form method="post" style="display: flex; gap: 6px; align-items: center;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="edit_record" value="1">
+                                    <input type="hidden" name="record_id" value="{{ r.id }}">
+                                    
+                                    <select name="new_status" class="form-select" style="width: 100px; padding: 4px; font-size: 12px;">
+                                        <option value="PRESENT" {% if r.status == 'PRESENT' %}selected{% endif %}>Present</option>
+                                        <option value="ABSENT" {% if r.status == 'ABSENT' %}selected{% endif %}>Absent</option>
+                                        <option value="EXCUSED" {% if r.status == 'EXCUSED' %}selected{% endif %}>On-Duty</option>
+                                    </select>
+
+                                    <input type="text" name="change_reason" placeholder="Mandatory reason..." required class="form-control" style="width: 150px; padding: 4px 8px; font-size: 12px;">
+
+                                    <button type="submit" class="btn btn-secondary btn-sm" onclick="return confirm('Update attendance record for {{ r.student.roll_number }}?');">
+                                        Save
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="panel-body">
+            <div class="empty-state">
+                <div class="empty-state-title">Select an Attendance Session</div>
+                <div class="empty-state-text">Choose a session from the list on the left to inspect or correct attendance records.</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

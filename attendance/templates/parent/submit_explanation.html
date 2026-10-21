@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Absence Explanation{% endblock %}
+{% block page_title %}Submit Parental Absence Justification{% endblock %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 24px;">
+    <!-- Form -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                New Absence Explanation
+            </div>
+        </div>
+        <div class="panel-body">
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                Inform the department regarding illnesses, family emergencies, or authorized reasons for your ward's absence.
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label">Select Student Ward</label>
+                    <select name="student_id" class="form-select" required>
+                        {% for r in relations %}
+                        <option value="{{ r.student.id }}">
+                            {{ r.student.roll_number }} — {{ r.student.user.get_full_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Date of Absence</label>
+                    <input type="date" name="date" class="form-control" value="{{ request.GET.date|default:'' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Reason / Justification</label>
+                    <textarea name="reason" class="form-control" rows="4" placeholder="Detailed explanation regarding the ward's absence..." required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    Submit Explanation to Faculty
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Past Submitted Explanations -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Previous Explanations Submitted
+            </div>
+        </div>
+        <div class="panel-body" style="padding: 0;">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Ward</th>
+                            <th>Date</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Faculty Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for exp in explanations %}
+                        <tr>
+                            <td><strong>{{ exp.student.roll_number }}</strong></td>
+                            <td>{{ exp.date|date:"d M Y" }}</td>
+                            <td style="font-size: 12.5px; max-width: 200px;">{{ exp.reason }}</td>
+                            <td>
+                                <span class="status-tag {% if exp.status == 'ACKNOWLEDGED' %}tag-present{% else %}tag-excused{% endif %}">
+                                    {{ exp.get_status_display }}
+                                </span>
+                            </td>
+                            <td style="font-size: 12px; color: var(--text-secondary);">{{ exp.faculty_remarks|default:"Pending review" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No explanation letters submitted yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

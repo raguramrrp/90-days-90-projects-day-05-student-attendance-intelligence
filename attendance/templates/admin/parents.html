@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Parent Directory{% endblock %}
+{% block page_title %}Parent Directory & Linked Wards{% endblock %}
+
+{% block content %}
+<div class="panel">
+    <div class="panel-header">
+        <div class="panel-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Registered Parent Accounts
+        </div>
+        <span style="font-size: 13px; color: var(--text-secondary);">Total: {{ parents.count }}</span>
+    </div>
+
+    <div class="panel-body" style="padding: 0;">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Parent Name</th>
+                        <th>Email</th>
+                        <th>Linked Ward(s)</th>
+                        <th>Relationship</th>
+                        <th>Alert Preferences</th>
+                        <th>SMS Alerts</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in parents %}
+                    <tr>
+                        <td><strong>{{ p.user.get_full_name|default:p.user.username }}</strong></td>
+                        <td>{{ p.user.email }}</td>
+                        <td>
+                            {% for rel in p.student_relations.all %}
+                            <div>
+                                <strong>{{ rel.student.roll_number }}</strong> — {{ rel.student.user.get_full_name }}
+                                <span style="font-size: 11.5px; color: var(--text-muted);">({{ rel.student.class_section.name }})</span>
+                            </div>
+                            {% empty %}
+                            <span style="color: var(--text-muted); font-size: 12px;">Unlinked</span>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% for rel in p.student_relations.all %}
+                            <div>{{ rel.get_relationship_type_display }}</div>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <span class="status-tag tag-present">{{ p.get_notification_preference_display }}</span>
+                        </td>
+                        <td>
+                            {% if p.sms_enabled %}
+                            <span style="color: var(--status-safe); font-weight: 600;">Active</span>
+                            {% else %}
+                            <span style="color: var(--text-muted);">Disabled</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No parent accounts registered.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}Students Registry{% endblock %}
+{% block page_title %}Students Registry & Attendance Records{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'admin_import_export' %}" class="btn btn-primary btn-sm">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+    Import Attendance
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="panel">
+    <div class="panel-header" style="flex-wrap: wrap; gap: 12px;">
+        <form method="get" style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%;">
+            <input type="text" name="q" class="form-control" style="max-width: 260px;" placeholder="Search roll no, name..." value="{{ search_query }}">
+            
+            <select name="dept" class="form-select" style="max-width: 180px;">
+                <option value="">All Departments</option>
+                {% for d in departments %}
+                <option value="{{ d.code }}" {% if dept_filter == d.code %}selected{% endif %}>{{ d.code }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="risk" class="form-select" style="max-width: 170px;">
+                <option value="">All Risk States</option>
+                {% for r_val, r_label in risk_choices %}
+                <option value="{{ r_val }}" {% if risk_filter == r_val %}selected{% endif %}>{{ r_label }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit" class="btn btn-secondary">Filter</button>
+            {% if search_query or dept_filter or risk_filter %}
+            <a href="{% url 'admin_students' %}" class="btn btn-secondary" style="color: var(--text-muted);">Reset</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="panel-body" style="padding: 0;">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Roll Number</th>
+                        <th>Name</th>
+                        <th>Class / Section</th>
+                        <th>Department</th>
+                        <th>Attendance %</th>
+                        <th>Risk Standing</th>
+                        <th>Emergency Contact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for st in page_obj %}
+                    <tr>
+                        <td><strong>{{ st.roll_number }}</strong></td>
+                        <td>{{ st.user.get_full_name|default:st.user.username }}</td>
+                        <td>{{ st.class_section.name|default:"Unassigned" }}</td>
+                        <td>{{ st.class_section.department.code|default:"-" }}</td>
+                        <td>
+                            <strong style="color: {% if st.cached_risk_level == 'SAFE' %}var(--status-safe){% elif st.cached_risk_level == 'WARNING' %}var(--status-warning){% else %}var(--status-critical){% endif %};">
+                                {{ st.cached_attendance_percentage }}%
+                            </strong>
+                            <div class="progress-bar-wrap" style="width: 100px;">
+                                <div class="progress-bar-fill {% if st.cached_risk_level == 'SAFE' %}fill-safe{% elif st.cached_risk_level == 'WARNING' %}fill-warning{% else %}fill-critical{% endif %}" style="width: {{ st.cached_attendance_percentage }}%;"></div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if st.cached_risk_level == 'SAFE' %}
+                            <span class="badge-risk risk-safe">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                Safe Standing
+                            </span>
+                            {% elif st.cached_risk_level == 'WARNING' %}
+                            <span class="badge-risk risk-warning">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+                                Warning Buffer
+                            </span>
+                            {% else %}
+                            <span class="badge-risk risk-critical">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                                Critical Debarment Risk
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>{{ st.emergency_contact|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <div class="empty-state-title">No matching students found</div>
+                                <div class="empty-state-text">Try adjusting search keywords or clearing active filters.</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border);">
+            <span style="font-size: 13px; color: var(--text-secondary);">
+                Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+            <div style="display: flex; gap: 8px;">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}&dept={{ dept_filter }}&risk={{ risk_filter }}" class="btn btn-secondary btn-sm">&larr; Previous</a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&q={{ search_query }}&dept={{ dept_filter }}&risk={{ risk_filter }}" class="btn btn-secondary btn-sm">Next &rarr;</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

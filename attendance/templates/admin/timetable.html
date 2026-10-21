@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Timetable Sessions{% endblock %}
+{% block page_title %}Academic Timetable & Scheduled Class Periods{% endblock %}
+
+{% block content %}
+<div class="panel">
+    <div class="panel-header">
+        <form method="get" style="display: flex; gap: 10px; align-items: center;">
+            <label class="form-label" style="margin-bottom: 0;">Select Class Section:</label>
+            <select name="class_id" class="form-select" onchange="this.form.submit()" style="max-width: 260px;">
+                {% for c in all_classes %}
+                <option value="{{ c.id }}" {% if selected_class and selected_class.id == c.id %}selected{% endif %}>
+                    {{ c.name }} ({{ c.department.code }})
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    <div class="panel-body" style="padding: 0;">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Day of Week</th>
+                        <th>Period</th>
+                        <th>Timing</th>
+                        <th>Subject</th>
+                        <th>Assigned Faculty</th>
+                        <th>Room</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in timetable_entries %}
+                    <tr>
+                        <td><strong>{{ t.get_day_of_week_display }}</strong></td>
+                        <td><span class="status-tag tag-present">Period {{ t.period_number }}</span></td>
+                        <td>{{ t.start_time|time:"H:i" }} – {{ t.end_time|time:"H:i" }}</td>
+                        <td><strong>{{ t.subject.code }}</strong> - {{ t.subject.name }}</td>
+                        <td>{{ t.faculty.user.get_full_name|default:"TBD" }}</td>
+                        <td>{{ t.room_number|default:"Hall A" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No timetable entries configured for this section.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

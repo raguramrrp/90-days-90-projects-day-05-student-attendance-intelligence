@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Alert Preferences{% endblock %}
+{% block page_title %}Parent Notification Channels & Frequency Settings{% endblock %}
+
+{% block content %}
+<div style="max-width: 680px;">
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                Communication Channels & Alert Thresholds
+            </div>
+        </div>
+        <div class="panel-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label">Alert Sensitivity & Frequency</label>
+                    <select name="notification_preference" class="form-select">
+                        <option value="ALL" {% if parent.notification_preference == 'ALL' %}selected{% endif %}>
+                            Immediate Alerts (Each Period Absence + Risk Status Changes)
+                        </option>
+                        <option value="ALERTS_ONLY" {% if parent.notification_preference == 'ALERTS_ONLY' %}selected{% endif %}>
+                            Risk Threshold Alerts Only (Warning / Critical Status)
+                        </option>
+                        <option value="DAILY_DIGEST" {% if parent.notification_preference == 'DAILY_DIGEST' %}selected{% endif %}>
+                            Daily Absence Summary (Single Evening Digest)
+                        </option>
+                    </select>
+                </div>
+
+                <div style="background: var(--surface-subtle); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin: 20px 0;">
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer;">
+                            <input type="checkbox" name="sms_enabled" value="1" {% if parent.sms_enabled %}checked{% endif %}>
+                            <span>Enable Mobile SMS Alerts (Simulated sandbox on local development)</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer;">
+                            <input type="checkbox" name="email_enabled" value="1" {% if parent.email_enabled %}checked{% endif %}>
+                            <span>Enable Email Notifications (To registered parent email: {{ parent.user.email }})</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Save Preferences</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+{
+  "accuracy": 100.0,
+  "classification_report": {
+    "CRITICAL": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 30.0
+    },
+    "SAFE": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 48.0
+    },
+    "WARNING": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 42.0
+    },
+    "accuracy": 1.0,
+    "macro avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 120.0
+    },
+    "weighted avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 120.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      30,
+      0,
+      0
+    ],
+    [
+      0,
+      48,
+      0
+    ],
+    [
+      0,
+      0,
+      42
+    ]
+  ],
+  "class_labels": [
+    "CRITICAL",
+    "SAFE",
+    "WARNING"
+  ],
+  "feature_importances": {
+    "attendance_percentage": 1.0,
+    "consecutive_absences": 0.0,
+    "absence_velocity_14d": 0.0,
+    "past_leave_count": 0.0,
+    "past_correction_count": 0.0,
+    "period_of_day_mode": 0.0
+  },
+  "note": "Model trained on controlled synthetic dataset for demonstration purposes."
+}

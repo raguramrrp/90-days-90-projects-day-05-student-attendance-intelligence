@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Ward Attendance Details{% endblock %}
+{% block page_title %}{{ student.user.get_full_name }} — Academic Attendance Report{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'parent_dashboard' %}" class="btn btn-secondary btn-sm">&larr; Back to Wards</a>
+<a href="{% url 'parent_submit_explanation' %}?student_id={{ student.id }}" class="btn btn-primary btn-sm">Submit Absence Explanation</a>
+{% endblock %}
+
+{% block content %}
+<div class="stat-grid" style="margin-bottom: 20px;">
+    <div class="stat-card">
+        <div class="stat-label">Overall Percentage</div>
+        <div class="stat-value" style="color: {% if overall.risk_info.risk_level == 'SAFE' %}var(--status-safe){% elif overall.risk_info.risk_level == 'WARNING' %}var(--status-warning){% else %}var(--status-critical){% endif %};">
+            {{ overall.stats.percentage }}%
+        </div>
+        <div class="stat-subtext">Eligibility Target: {{ overall.target_percentage }}%</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Attended Periods</div>
+        <div class="stat-value" style="color: var(--status-safe);">{{ overall.stats.effective_attended }}</div>
+        <div class="stat-subtext">Total Eligible: {{ overall.stats.total_eligible }}</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Missed Periods</div>
+        <div class="stat-value" style="color: var(--status-critical);">{{ overall.stats.absent_count }}</div>
+        <div class="stat-subtext">Absence periods recorded</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Early Warning Standing</div>
+        <div class="stat-value" style="font-size: 20px; color: {% if overall.risk_info.risk_level == 'SAFE' %}var(--status-safe){% elif overall.risk_info.risk_level == 'WARNING' %}var(--status-warning){% else %}var(--status-critical){% endif %};">
+            {{ overall.risk_info.risk_label }}
+        </div>
+        <div class="stat-subtext">{{ overall.risk_info.recommendation }}</div>
+    </div>
+</div>
+
+<div class="panel">
+    <div class="panel-header">
+        <div class="panel-title">Subject-Wise Course Breakdown</div>
+    </div>
+    <div class="panel-body" style="padding: 0;">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Subject Code</th>
+                        <th>Subject Name</th>
+                        <th>Attended</th>
+                        <th>Total Periods</th>
+                        <th>Percentage</th>
+                        <th>Requirement</th>
+                        <th>Risk Standing</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in subject_details %}
+                    <tr>
+                        <td><strong>{{ sub.subject.code }}</strong></td>
+                        <td>{{ sub.subject.name }}</td>
+                        <td>{{ sub.stats.effective_attended }}</td>
+                        <td>{{ sub.stats.total_eligible }}</td>
+                        <td>
+                            <strong style="color: {% if sub.risk_info.risk_level == 'SAFE' %}var(--status-safe){% elif sub.risk_info.risk_level == 'WARNING' %}var(--status-warning){% else %}var(--status-critical){% endif %};">
+                                {{ sub.stats.percentage }}%
+                            </strong>
+                        </td>
+                        <td>{{ sub.target_percentage }}%</td>
+                        <td>
+                            {% if sub.risk_info.risk_level == 'SAFE' %}
+                            <span class="badge-risk risk-safe">Safe Standing</span>
+                            {% elif sub.risk_info.risk_level == 'WARNING' %}
+                            <span class="badge-risk risk-warning">Warning Buffer</span>
+                            {% else %}
+                            <span class="badge-risk risk-critical">Critical Risk</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No course enrollments found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

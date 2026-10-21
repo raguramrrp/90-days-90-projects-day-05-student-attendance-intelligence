@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Page Not Found (404){% endblock %}
+
+{% block content %}
+<div class="empty-state" style="padding: 60px 20px;">
+    <div class="empty-state-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>
+    </div>
+    <h2 class="empty-state-title" style="font-size: 24px;">404 — Resource Not Found</h2>
+    <p class="empty-state-text">
+        The requested attendance view, report, or entity could not be located in the database.
+    </p>
+    <div style="margin-top: 20px;">
+        <a href="{% url 'dashboard_redirect' %}" class="btn btn-primary">Return to Portal</a>
+    </div>
+</div>
+{% endblock %}

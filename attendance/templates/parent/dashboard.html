@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Parent Portal Dashboard{% endblock %}
+{% block page_title %}Parent Ward Attendance Monitoring & Early Alerts{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'parent_submit_explanation' %}" class="btn btn-secondary btn-sm">Submit Absence Explanation</a>
+<a href="{% url 'parent_preferences' %}" class="btn btn-primary btn-sm">Alert Preferences</a>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px;">
+    {% for item in children_data %}
+    <div class="panel" style="margin-bottom: 24px; border-left: 5px solid {% if item.overall.risk_info.risk_level == 'SAFE' %}var(--status-safe){% elif item.overall.risk_info.risk_level == 'WARNING' %}var(--status-warning){% else %}var(--status-critical){% endif %};">
+        <div class="panel-body" style="padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                <div>
+                    <span class="brand-badge" style="color: var(--brand-forest);">Ward ({{ item.relationship }})</span>
+                    <h2 style="font-size: 24px; color: var(--brand-forest); margin-top: 4px;">
+                        {{ item.student.user.get_full_name }}
+                    </h2>
+                    <div style="font-size: 13.5px; color: var(--text-secondary); margin-top: 4px;">
+                        Roll: <strong>{{ item.student.roll_number }}</strong> &bull; Class: <strong>{{ item.student.class_section.name }}</strong>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div style="text-align: right;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Overall Attendance</div>
+                        <div style="font-family: var(--font-serif); font-size: 36px; font-weight: 700; color: {% if item.overall.risk_info.risk_level == 'SAFE' %}var(--status-safe){% elif item.overall.risk_info.risk_level == 'WARNING' %}var(--status-warning){% else %}var(--status-critical){% endif %};">
+                            {{ item.overall.stats.percentage }}%
+                        </div>
+                    </div>
+
+                    <div>
+                        {% if item.overall.risk_info.risk_level == 'SAFE' %}
+                        <span class="badge-risk risk-safe" style="padding: 8px 12px;">Safe (Above Target)</span>
+                        {% elif item.overall.risk_info.risk_level == 'WARNING' %}
+                        <span class="badge-risk risk-warning" style="padding: 8px 12px;">Warning (Buffer Zone)</span>
+                        {% else %}
+                        <span class="badge-risk risk-critical" style="padding: 8px 12px;">Critical Debarment Risk</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recovery advice -->
+            <div style="background: var(--surface-subtle); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; margin-top: 18px;">
+                <div style="font-size: 13px; color: var(--text-main);">
+                    <strong>Attendance Standing:</strong> {{ item.overall.projections.explanation }}
+                </div>
+            </div>
+
+            <!-- Recent absences for this ward -->
+            <div style="margin-top: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="font-size: 14px; color: var(--brand-forest);">Recent Recorded Period Absences</h4>
+                    <a href="{% url 'parent_child_detail' item.student.id %}" style="font-size: 12.5px; font-weight: 600;">View Full Subject Report &rarr;</a>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Period</th>
+                                <th>Subject</th>
+                                <th>Remarks</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for abs in item.recent_absences %}
+                            <tr>
+                                <td><strong>{{ abs.session.date|date:"D, d M Y" }}</strong></td>
+                                <td>Period {{ abs.session.period_number }}</td>
+                                <td>{{ abs.session.subject.code }} - {{ abs.session.subject.name }}</td>
+                                <td>{{ abs.remarks|default:"Unexcused absence" }}</td>
+                                <td>
+                                    <a href="{% url 'parent_submit_explanation' %}?student_id={{ item.student.id }}&date={{ abs.session.date }}" class="btn btn-secondary btn-sm">
+                                        Explain Absence
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--status-safe); padding: 16px; font-weight: 500;">
+                                    No recent absences recorded. Your ward has maintained regular attendance.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <div class="empty-state-title">No Wards Linked to This Account</div>
+        <div class="empty-state-text">Please contact the institutional administrator to link your parent account to your student ward.</div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

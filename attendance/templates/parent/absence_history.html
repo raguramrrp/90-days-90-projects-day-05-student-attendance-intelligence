@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Absence History{% endblock %}
+{% block page_title %}Period Absence Records & Dispatches{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'parent_submit_explanation' %}" class="btn btn-primary btn-sm">Submit Absence Explanation</a>
+{% endblock %}
+
+{% block content %}
+<div class="panel">
+    <div class="panel-header">
+        <div class="panel-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+            Historical Absence Log for Your Wards
+        </div>
+    </div>
+    <div class="panel-body" style="padding: 0;">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Period</th>
+                        <th>Ward</th>
+                        <th>Course</th>
+                        <th>Faculty</th>
+                        <th>Absence Remarks</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in absences %}
+                    <tr>
+                        <td style="white-space: nowrap;"><strong>{{ a.session.date|date:"D, d M Y" }}</strong></td>
+                        <td><span class="status-tag tag-absent">Period {{ a.session.period_number }}</span></td>
+                        <td><strong>{{ a.student.roll_number }}</strong> — {{ a.student.user.get_full_name }}</td>
+                        <td>{{ a.session.subject.code }} ({{ a.session.subject.name }})</td>
+                        <td>{{ a.session.faculty.user.get_full_name|default:"Faculty" }}</td>
+                        <td>{{ a.remarks|default:"Unexcused absence" }}</td>
+                        <td>
+                            <a href="{% url 'parent_submit_explanation' %}?student_id={{ a.student.id }}&date={{ a.session.date }}" class="btn btn-secondary btn-sm">
+                                Submit Explanation
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: var(--status-safe); padding: 24px; font-weight: 500;">
+                            No absence events found across your linked wards.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

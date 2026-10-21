@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ subject.code }} Attendance Log{% endblock %}
+{% block page_title %}{{ subject.code }}: {{ subject.name }}{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'student_my_attendance' %}" class="btn btn-secondary btn-sm">&larr; Back to Subjects</a>
+<a href="{% url 'student_attendance_simulator' %}?subject_id={{ subject.id }}" class="btn btn-primary btn-sm">Simulate Recovery for this Course</a>
+{% endblock %}
+
+{% block content %}
+<!-- Subject Stat Header -->
+<div class="stat-grid" style="margin-bottom: 20px;">
+    <div class="stat-card">
+        <div class="stat-label">Course Percentage</div>
+        <div class="stat-value" style="color: {% if subject_data.risk_info.risk_level == 'SAFE' %}var(--status-safe){% elif subject_data.risk_info.risk_level == 'WARNING' %}var(--status-warning){% else %}var(--status-critical){% endif %};">
+            {{ subject_data.stats.percentage }}%
+        </div>
+        <div class="stat-subtext">Required Minimum: {{ subject_data.target_percentage }}%</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Attended Periods</div>
+        <div class="stat-value" style="color: var(--status-safe);">{{ subject_data.stats.effective_attended }}</div>
+        <div class="stat-subtext">Out of {{ subject_data.stats.total_eligible }} total recorded sessions</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Missed Periods</div>
+        <div class="stat-value" style="color: var(--status-critical);">{{ subject_data.stats.absent_count }}</div>
+        <div class="stat-subtext">Unexcused recorded absences</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Recovery Requirement</div>
+        <div class="stat-value">
+            {% if subject_data.projections.is_target_met %}
+            {{ subject_data.projections.max_absences_permitted }} Margin
+            {% else %}
+            {{ subject_data.projections.sessions_needed }} Needed
+            {% endif %}
+        </div>
+        <div class="stat-subtext">{{ subject_data.projections.explanation }}</div>
+    </div>
+</div>
+
+<!-- Detailed Period History Table -->
+<div class="panel">
+    <div class="panel-header">
+        <div class="panel-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Complete Period Attendance Log
+        </div>
+        <span style="font-size: 12.5px; color: var(--text-secondary);">If you believe an absence was recorded in error, submit a correction dispute.</span>
+    </div>
+
+    <div class="panel-body" style="padding: 0;">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Period</th>
+                        <th>Faculty</th>
+                        <th>Attendance Status</th>
+                        <th>Topic Covered</th>
+                        <th>Faculty Remarks</th>
+                        <th>Dispute</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in records %}
+                    <tr>
+                        <td><strong>{{ r.session.date|date:"D, d M Y" }}</strong></td>
+                        <td><span class="status-tag tag-present">P{{ r.session.period_number }}</span></td>
+                        <td>{{ r.session.faculty.user.get_full_name|default:"Assigned Faculty" }}</td>
+                        <td>
+                            <span class="status-tag {% if r.status == 'PRESENT' %}tag-present{% elif r.status == 'ABSENT' %}tag-absent{% else %}tag-excused{% endif %}">
+                                {{ r.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ r.session.topic_covered|default:"-" }}</td>
+                        <td>{{ r.remarks|default:"-" }}</td>
+                        <td>
+                            {% if r.status == 'ABSENT' %}
+                            <a href="{% url 'student_correction_requests' %}?record_id={{ r.id }}" class="btn btn-secondary btn-sm" style="color: var(--accent-terracotta);">
+                                Dispute Absence
+                            </a>
+                            {% else %}
+                            <span style="color: var(--text-muted); font-size: 11px;">Verified</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No sessions recorded for this course yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

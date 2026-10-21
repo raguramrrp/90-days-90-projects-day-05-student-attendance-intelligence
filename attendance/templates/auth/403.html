@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Access Denied (403){% endblock %}
+
+{% block content %}
+<div class="empty-state" style="padding: 60px 20px;">
+    <div class="empty-state-icon" style="color: var(--status-critical);">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" x2="19.07" y1="4.93" y2="19.07"/></svg>
+    </div>
+    <h2 class="empty-state-title" style="font-size: 24px; color: var(--status-critical);">403 — Authorization Required</h2>
+    <p class="empty-state-text">
+        You do not possess the required permissions or role authorization to access this page.
+        Role-based boundaries are strictly enforced to preserve student privacy and institutional security.
+    </p>
+    <div style="margin-top: 20px;">
+        <a href="{% url 'dashboard_redirect' %}" class="btn btn-primary">Return to My Dashboard</a>
+    </div>
+</div>
+{% endblock %}

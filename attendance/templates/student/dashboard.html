@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}My Attendance Dashboard{% endblock %}
+{% block page_title %}Student Attendance Intelligence & Risk Assessment{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'student_attendance_simulator' %}" class="btn btn-accent btn-sm">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+    Recovery Simulator
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Overall Attendance Banner -->
+<div class="panel" style="background: linear-gradient(135deg, var(--surface) 0%, var(--brand-forest-light) 100%); border-left: 5px solid {% if overall.risk_info.risk_level == 'SAFE' %}var(--status-safe){% elif overall.risk_info.risk_level == 'WARNING' %}var(--status-warning){% else %}var(--status-critical){% endif %};">
+    <div class="panel-body" style="padding: 24px 28px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+            <div>
+                <span class="brand-badge" style="color: var(--brand-forest);">Overall Academic Standing</span>
+                <h2 style="font-size: 26px; color: var(--brand-forest); margin-top: 4px;">
+                    {{ student.user.get_full_name|default:student.user.username }}
+                </h2>
+                <div style="font-size: 13.5px; color: var(--text-secondary); margin-top: 4px;">
+                    Roll Number: <strong>{{ student.roll_number }}</strong> &bull; Class: <strong>{{ student.class_section.name }}</strong>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 24px;">
+                <div style="text-align: right;">
+                    <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 600;">
+                        Overall Attendance
+                    </div>
+                    <div style="font-family: var(--font-serif); font-size: 38px; font-weight: 700; color: {% if overall.risk_info.risk_level == 'SAFE' %}var(--status-safe){% elif overall.risk_info.risk_level == 'WARNING' %}var(--status-warning){% else %}var(--status-critical){% endif %};">
+                        {{ overall.stats.percentage }}%
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-muted);">
+                        Attended {{ overall.stats.effective_attended }} of {{ overall.stats.total_eligible }} recorded periods
+                    </div>
+                </div>
+
+                <div>
+                    {% if overall.risk_info.risk_level == 'SAFE' %}
+                    <span class="badge-risk risk-safe" style="padding: 8px 14px; font-size: 13px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        Safe Standing (≥80%)
+                    </span>
+                    {% elif overall.risk_info.risk_level == 'WARNING' %}
+                    <span class="badge-risk risk-warning" style="padding: 8px 14px; font-size: 13px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+                        Warning Buffer (75%–80%)
+                    </span>
+                    {% else %}
+                    <span class="badge-risk risk-critical" style="padding: 8px 14px; font-size: 13px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                        Critical Debarment Risk (<75%)
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="progress-bar-wrap" style="height: 10px; margin-top: 18px;">
+            <div class="progress-bar-fill {% if overall.risk_info.risk_level == 'SAFE' %}fill-safe{% elif overall.risk_info.risk_level == 'WARNING' %}fill-warning{% else %}fill-critical{% endif %}" style="width: {{ overall.stats.percentage }}%;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Mathematical Recovery / Standing Insights Card -->
+<div class="panel" style="border: 1px solid var(--border);">
+    <div class="panel-header">
+        <div class="panel-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            Mathematical Recovery & Margin-of-Absence Analysis (Target: {{ overall.target_percentage }}%)
+        </div>
+        <a href="{% url 'student_attendance_simulator' %}" class="btn btn-secondary btn-sm">Launch What-If Simulator &rarr;</a>
+    </div>
+    <div class="panel-body">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div style="background: var(--surface-subtle); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px;">
+                <div style="font-size: 12px; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; margin-bottom: 4px;">
+                    Attendance Buffer / Recovery Requirement
+                </div>
+                {% if overall.projections.is_target_met %}
+                <div style="font-size: 22px; font-weight: 700; color: var(--status-safe); margin-bottom: 4px;">
+                    {{ overall.projections.max_absences_permitted }} Sessions Margin
+                </div>
+                <p style="font-size: 13px; color: var(--text-secondary);">
+                    Your attendance is currently above the {{ overall.target_percentage }}% requirement. You can afford to miss at most <strong>{{ overall.projections.max_absences_permitted }}</strong> more sessions while remaining eligible for end-semester examinations.
+                </p>
+                {% else %}
+                <div style="font-size: 22px; font-weight: 700; color: var(--status-critical); margin-bottom: 4px;">
+                    {{ overall.projections.sessions_needed }} Consecutive Classes Needed
+                </div>
+                <p style="font-size: 13px; color: var(--text-secondary);">
+                    To recover above the mandatory {{ overall.target_percentage }}% eligibility threshold, you must attend the next <strong>{{ overall.projections.sessions_needed }}</strong> consecutive scheduled sessions without any unexcused absences.
+                </p>
+                {% endif %}
+            </div>
+
+            <div style="background: var(--surface-subtle); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px;">
+                <div style="font-size: 12px; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; margin-bottom: 4px;">
+                    Early Warning Diagnostics
+                </div>
+                <ul style="padding-left: 18px; font-size: 13px; color: var(--text-main); margin-bottom: 8px;">
+                    {% for reason in overall.risk_info.reasons %}
+                    <li style="margin-bottom: 4px;">{{ reason }}</li>
+                    {% endfor %}
+                </ul>
+                <div style="font-size: 12.5px; color: var(--brand-forest); font-weight: 600; margin-top: 6px;">
+                    Recommendation: {{ overall.risk_info.recommendation }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Subject Cards Grid -->
+<div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+    <h3 style="font-size: 18px; color: var(--brand-forest);">Enrolled Course Breakdowns</h3>
+    <a href="{% url 'student_my_attendance' %}" style="font-size: 13px; font-weight: 600;">View All Details &rarr;</a>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+    {% for s in subject_cards %}
+    <div class="stat-card" style="border-top: 4px solid {% if s.risk_info.risk_level == 'SAFE' %}var(--status-safe){% elif s.risk_info.risk_level == 'WARNING' %}var(--status-warning){% else %}var(--status-critical){% endif %};">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+            <div>
+                <strong style="font-size: 15px; color: var(--brand-forest);">{{ s.subject.code }}</strong>
+                <div style="font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;">
+                    {{ s.subject.name }}
+                </div>
+            </div>
+            <span class="badge-risk {% if s.risk_info.risk_level == 'SAFE' %}risk-safe{% elif s.risk_info.risk_level == 'WARNING' %}risk-warning{% else %}risk-critical{% endif %}">
+                {{ s.stats.percentage }}%
+            </span>
+        </div>
+
+        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+            Attended: <strong>{{ s.stats.effective_attended }}</strong> / {{ s.stats.total_eligible }} &bull; Missed: {{ s.stats.absent_count }}
+        </div>
+
+        <div class="progress-bar-wrap">
+            <div class="progress-bar-fill {% if s.risk_info.risk_level == 'SAFE' %}fill-safe{% elif s.risk_info.risk_level == 'WARNING' %}fill-warning{% else %}fill-critical{% endif %}" style="width: {{ s.stats.percentage }}%;"></div>
+        </div>
+
+        <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 11px; color: var(--text-secondary);">Min Req: {{ s.target_percentage }}%</span>
+            <a href="{% url 'student_subject_detail' s.subject.id %}" style="font-size: 12px; font-weight: 600;">Periods Log &rarr;</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Recent Recorded Sessions -->
+<div class="panel">
+    <div class="panel-header">
+        <div class="panel-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Recent Attendance Periods Recorded
+        </div>
+        <a href="{% url 'student_correction_requests' %}" class="btn btn-secondary btn-sm">Dispute an Absence</a>
+    </div>
+    <div class="panel-body" style="padding: 0;">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Period</th>
+                        <th>Subject</th>
+                        <th>Faculty</th>
+                        <th>Status</th>
+                        <th>Topic Covered</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in recent_records %}
+                    <tr>
+                        <td style="white-space: nowrap;">{{ r.session.date|date:"D, d M Y" }}</td>
+                        <td><span class="status-tag tag-present">Period {{ r.session.period_number }}</span></td>
+                        <td><strong>{{ r.session.subject.code }}</strong> - {{ r.session.subject.name }}</td>
+                        <td>{{ r.session.faculty.user.get_full_name|default:"Assigned Faculty" }}</td>
+                        <td>
+                            <span class="status-tag {% if r.status == 'PRESENT' %}tag-present{% elif r.status == 'ABSENT' %}tag-absent{% else %}tag-excused{% endif %}">
+                                {{ r.get_status_display }}
+                            </span>
+                        </td>
+                        <td style="font-size: 12.5px; color: var(--text-secondary);">{{ r.session.topic_covered|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No recent attendance sessions found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

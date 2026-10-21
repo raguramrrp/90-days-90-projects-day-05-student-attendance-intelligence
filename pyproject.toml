@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "student-attendance-intelligence"
+version = "1.0.0"
+description = "Student Attendance Intelligence & Early Warning System - Educational EdTech Platform with Multi-Role Portals, Real Attendance Analytics, Mathematical Recovery Simulation, and Rule-Based/ML Early Warning Detection."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Ragu Ram P", email = "raguramrrp@gmail.com"}
+]
+keywords = [
+    "django",
+    "attendance-management",
+    "early-warning-system",
+    "predictive-analytics",
+    "education-technology",
+    "edtech",
+    "machine-learning",
+    "decision-tree",
+    "chartjs"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Framework :: Django",
+    "Framework :: Django :: 5.0",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Education"
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "core.settings"
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-v --tb=short"

@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Correction Dispute Reviews{% endblock %}
+{% block page_title %}Attendance Correction Disputes & Review Queue{% endblock %}
+
+{% block content %}
+<div class="panel">
+    <div class="panel-header">
+        <div class="panel-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Pending Attendance Dispute Claims
+        </div>
+        <span class="nav-badge">{{ pending_corrections.count }} pending</span>
+    </div>
+
+    <div class="panel-body" style="padding: 0;">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Session Disputed</th>
+                        <th>Claimed Status</th>
+                        <th>Student's Explanation</th>
+                        <th>Submitted On</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in pending_corrections %}
+                    <tr>
+                        <td>
+                            <strong>{{ c.student.roll_number }}</strong><br>
+                            <span style="font-size: 12px; color: var(--text-secondary);">{{ c.student.user.get_full_name }}</span>
+                        </td>
+                        <td>
+                            <strong>{{ c.attendance_record.session.subject.code }}</strong> &bull; Period {{ c.attendance_record.session.period_number }}<br>
+                            <span style="font-size: 12px; color: var(--text-secondary);">Date: {{ c.attendance_record.session.date }}</span>
+                        </td>
+                        <td>
+                            <span class="status-tag tag-present">Requesting: {{ c.get_requested_status_display }}</span><br>
+                            <span style="font-size: 11px; color: var(--text-muted);">(Recorded as {{ c.attendance_record.get_status_display }})</span>
+                        </td>
+                        <td style="max-width: 300px; font-size: 13px;">
+                            {{ c.reason }}
+                        </td>
+                        <td style="white-space: nowrap; font-size: 12px;">{{ c.created_at|date:"M d, H:i" }}</td>
+                        <td>
+                            <form method="post" style="display: flex; flex-direction: column; gap: 6px;">
+                                {% csrf_token %}
+                                <input type="hidden" name="correction_id" value="{{ c.id }}">
+                                <input type="text" name="review_comment" class="form-control" placeholder="Decision remark..." style="padding: 4px 8px; font-size: 12px;">
+                                <div style="display: flex; gap: 6px;">
+                                    <button type="submit" name="decision" value="APPROVED" class="btn btn-primary btn-sm" onclick="return confirm('Approve correction dispute for {{ c.student.roll_number }}?');">
+                                        Approve & Correct
+                                    </button>
+                                    <button type="submit" name="decision" value="REJECTED" class="btn btn-secondary btn-sm" style="color: var(--status-critical);" onclick="return confirm('Reject this dispute claim?');">
+                                        Reject
+                                    </button>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No pending attendance correction disputes.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Past Correction Decisions History -->
+<div class="panel">
+    <div class="panel-header">
+        <div class="panel-title">Past Dispute Decisions History</div>
+    </div>
+    <div class="panel-body" style="padding: 0;">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Subject & Date</th>
+                        <th>Requested</th>
+                        <th>Final Status</th>
+                        <th>Remark</th>
+                        <th>Reviewed By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in past_corrections %}
+                    <tr>
+                        <td><strong>{{ c.student.roll_number }}</strong></td>
+                        <td>{{ c.attendance_record.session.subject.code }} ({{ c.attendance_record.session.date }})</td>
+                        <td>{{ c.get_requested_status_display }}</td>
+                        <td>
+                            <span class="status-tag {% if c.status == 'APPROVED' %}tag-present{% else %}tag-absent{% endif %}">
+                                {{ c.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ c.review_comment|default:"-" }}</td>
+                        <td>{{ c.reviewed_by.get_full_name|default:c.reviewed_by.username }} ({{ c.reviewed_at|date:"M d" }})</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No historical correction records.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
