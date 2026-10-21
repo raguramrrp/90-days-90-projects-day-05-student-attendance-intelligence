@@ -246,14 +246,9 @@ Coverage spans authentication, role permissions, zero-session edge cases, mathem
 
 ---
 
-## 11. Learning Outcomes & Resume Keywords
-
-- **Technologies:** Python, Django, Django ORM, HTML5/CSS3 Custom Tokens, Chart.js, OpenPyXL, Scikit-learn, Pytest.
-- **Software Engineering:** Normalized Database Design, Domain-Driven Service Layers, Role-Based Access Control (RBAC), Mathematical Modeling, Formula Injection Prevention, Idempotent Notification Dispatch.
-- **Education Technology (EdTech):** Period-Wise Attendance Tracking, Early Warning Indicator Systems (EWIS), Student Debarment Prevention, Closed-Loop Dispute Workflows.
 
 ---
 
-## 12. License & Attribution
+## 11. License & Attribution
 
 Distributed under the **MIT License**. Created by **Ragu Ram P** for the **90 Days – 90 Projects Challenge**.
